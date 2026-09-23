@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wallace Peterson Chart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+:root{
+  --ground:#F4F7F8; --paper:#FFFFFF; --ink:#18262E; --muted:#56666F; --rule:#D5DEE2; --soft:#E9EFF1;
+  --accent:#1D6A85; --accent-soft:#E1EFF4; --alert:#B0352F;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0F171B; --paper:#162127; --ink:#E3ECEF; --muted:#98A9B1; --rule:#2A3A42; --soft:#1D2A31;
+    --accent:#6CB8D3; --accent-soft:#17323D; --alert:#F08A80;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0F171B; --paper:#162127; --ink:#E3ECEF; --muted:#98A9B1; --rule:#2A3A42; --soft:#1D2A31;
+  --accent:#6CB8D3; --accent-soft:#17323D; --alert:#F08A80;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.6 var(--sans);padding-inline:16px;padding-block:24px 64px}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;margin:0;line-height:1.25}
+h1{font-size:28px;font-weight:700}
+h2{font-size:21px;font-weight:700;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+h3{font-size:16.5px;font-weight:600}
+h4{margin:0;font-size:12.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);padding:6px 10px;background:var(--accent-soft);border-radius:3px}
+p{margin:0}
+ul,ol{margin:0;padding-left:22px}
+li{margin:2px 0}
+.label{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* banner */
+.banner{background:var(--paper);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.banner h1{padding:16px 20px 12px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:1px solid var(--rule)}
+.facts div{padding:10px 20px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:0 -1px -1px 0}
+.facts b{display:block;font-family:var(--mono);font-weight:500;font-size:14px}
+.facts .alert b,.facts .alert .label{color:var(--alert)}
+
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ground);padding-block:10px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--rule)}
+@media (max-width:600px){.tabs{flex-wrap:nowrap;overflow-x:auto}}
+.tabs button{flex:none;font:600 13px/1 var(--sans);color:var(--muted);background:var(--paper);border:1px solid var(--rule);padding:8px 12px;border-radius:999px;cursor:pointer}
+.tabs button:hover{color:var(--accent);border-color:var(--accent)}
+.tabs button[aria-selected="true"]{color:var(--paper);background:var(--accent);border-color:var(--accent)}
+.tabs button:focus-visible,.pager button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section[role="tabpanel"]{display:none;flex-direction:column;gap:16px}
+section[role="tabpanel"].active{display:flex}
+.sub{display:flex;flex-direction:column;gap:10px;scroll-margin-top:72px}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:8px}
+.pager button{font:600 13px/1 var(--sans);color:var(--accent);background:none;border:1px solid var(--rule);padding:9px 14px;border-radius:6px;cursor:pointer}
+.pager button:hover{border-color:var(--accent)}
+
+/* overview boxes */
+.boxes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:600px){.boxes{grid-template-columns:1fr}}
+.box{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.box h3{font-size:15px}
+
+/* field lines */
+.fields{display:flex;flex-direction:column;gap:4px}
+.fields b{font-weight:600}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--soft)}
+thead th{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--rule)}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+tbody th{font-weight:600;width:24%;background:var(--soft)}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.ref{color:var(--muted);font-size:13px;white-space:nowrap}
+td.indent{padding-left:28px;font-style:italic}
+td.group{font-weight:600}
+.cells{display:flex;flex-wrap:wrap;gap:6px 28px}
+.cells b{font-weight:600}
+.stack{display:block}
+
+/* timeline notes */
+.log{display:flex;flex-direction:column;border-top:1px solid var(--rule)}
+.log .row{display:grid;grid-template-columns:170px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.log .who{font-family:var(--mono);font-size:13px;font-weight:500;padding-top:1px}
+.log .row div{display:flex;flex-direction:column;gap:6px}
+@media (max-width:520px){.log .row{grid-template-columns:1fr;gap:2px}}
+.sig{color:var(--muted)}
+
+@media print{
+  body{background:#fff;padding:0;font-size:11pt}
+  .tabs,.pager{display:none!important}
+  section[role="tabpanel"]{display:flex!important;margin-bottom:18px}
+  .wrap{gap:18px;max-width:none}
+  h2,h3,h4{break-after:avoid}
+  .log .row,tr,.box{break-inside:avoid}
+  .tbl{overflow:visible}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<header class="banner" id="top">
+  <h1>Peterson, Wallace</h1>
+  <div class="facts">
+    <div><span class="label">Age/Sex</span><b>69 yr, M</b></div>
+    <div><span class="label">MRN</span><b>7214732</b></div>
+    <div><span class="label">Weight</span><b>59.4 kg</b></div>
+    <div><span class="label">DOB</span><b>06/06</b></div>
+    <div><span class="label">Lang</span><b>English</b></div>
+    <div><span class="label">Current Hospital Day</span><b>1</b></div>
+    <div class="alert"><span class="label">Allergies</span><b>NKA</b></div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Chart sections">
+  <button type="button" role="tab" id="tab-overview" aria-controls="overview">Patient Overview</button>
+  <button type="button" role="tab" id="tab-handoff" aria-controls="handoff">Handoff</button>
+  <button type="button" role="tab" id="tab-notes" aria-controls="notes">Notes</button>
+  <button type="button" role="tab" id="tab-orders" aria-controls="orders">Active Orders</button>
+  <button type="button" role="tab" id="tab-mar" aria-controls="mar">Medication Administration Record (MAR)</button>
+  <button type="button" role="tab" id="tab-labs" aria-controls="labs">Lab &amp; Diagnostic Results</button>
+  <button type="button" role="tab" id="tab-other" aria-controls="other">Other</button>
+</nav>
+
+<!-- PATIENT OVERVIEW -->
+<section role="tabpanel" id="overview" aria-labelledby="tab-overview">
+  <h2>Patient Overview</h2>
+  <div class="boxes">
+    <div class="box"><h3>Medical History</h3><ul><li>COPD for 6 years</li><li>Multiple bouts of pneumonia and bronchitis in past few years</li></ul></div>
+    <div class="box"><h3>Surgical History</h3><ul><li>Appendectomy, age 40</li></ul></div>
+    <div class="box"><h3>Medications</h3><ul><li>Hydrochlorothiazide 12.5 mg PO QD</li><li>Metoprolol 50 mg PO QD</li></ul></div>
+    <div class="box"><h3>Allergies</h3><ul><li>None known</li></ul></div>
+    <div class="box"><h3>Social History</h3><ul><li>Smoker with 70 pack-year history; quit 5 years ago</li><li>Divorced 5 years ago</li><li>In monogamous relationship with male partner</li></ul></div>
+    <div class="box"><h3>Family History/Comments</h3><ul><li>Mother died of lung cancer at age 72; history of schizophrenia</li><li>Father died of stroke at age 67; history of prostate and testicular cancer</li></ul></div>
+  </div>
+</section>
+
+<!-- HANDOFF -->
+<section role="tabpanel" id="handoff" aria-labelledby="tab-handoff">
+  <h2>Handoff - Hospital Day 1, 0800: Hospital Medicine Nursing Handoff Report</h2>
+
+  <h4>Situation</h4>
+  <div class="tbl"><table><tbody>
+    <tr><td><b>Admission:</b> Hospital Day 0, 0100 (ED)</td><td><b>Provider:</b> Lois Myer, MD</td></tr>
+    <tr><td><b>Name:</b> Wallace Peterson<br><b>Age:</b> 69 &nbsp;&nbsp; <b>Sex:</b> Male</td><td><b>Ethnicity:</b> Caucasian<br><b>Religion:</b> None</td></tr>
+    <tr><td colspan="2"><b>Admission Diagnosis:</b> Pneumonia</td></tr>
+  </tbody></table></div>
+
+  <h4>Background</h4>
+  <div class="fields">
+    <p><b>Pertinent Medical History:</b> 6-year history of chronic obstructive pulmonary disease. Multiple hospitalizations for pneumonia and bronchitis in the past few years. Quit smoking 5 years ago.</p>
+    <p><b>Pertinent Social History:</b> Divorced, lives with male partner of 5 years</p>
+    <p><b>Allergies:</b> No known allergies</p>
+    <p><b>Code Status:</b> Full code</p>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Vital Signs (most recent)</th><th>Time</th><th>T</th><th>BP</th><th>P</th><th>RR</th><th>O2 Sat</th></tr></thead>
+    <tbody><tr><td></td><td class="n">0400</td><td class="n">38.1 °C</td><td class="n">144/84</td><td class="n">102</td><td class="n">28</td><td class="n">88%</td></tr></tbody>
+  </table></div>
+
+  <div class="tbl"><table><tbody>
+    <tr><th>Oxygen Therapy:</th><td><div class="cells"><span><b>Mode:</b> Nasal cannula</span></div><span class="stack"><b>LPM:</b> 4; has required progressively increased supplemental oxygen to maintain oxygen saturation levels above 88%.On continuous pulse oximeter.</span></td></tr>
+    <tr><th>Pain:</th><td><span class="stack"><b>Rating:</b> 0</span><span class="stack"><b>Most Recent Pain Medication:</b> Acetaminophen 650 mg for elevated temperature</span><span class="stack"><b>Time:</b> HD 0, 2350</span></td></tr>
+    <tr><th>Other Recent Medication:</th><td>Ipratropium inhalation administered 0600.</td></tr>
+    <tr><th>IVs:</th><td><div class="cells"><span><b>Site:</b> R forearm</span><span><b>Type:</b> PIV</span><span><b>Assessment:</b> Patent</span><span><b>Fluid:</b> Dextrose 5% in 1/2 normal saline at 75 mL/hr</span></div></td></tr>
+    <tr><th>Drains and Tubes:</th><td><div class="cells"><span><b>Site:</b> None</span><span><b>Type:</b> Not Applicable</span><span><b>Assessment:</b> Not Applicable</span></div></td></tr>
+    <tr><th>Wounds:</th><td><div class="cells"><span><b>Site:</b> None</span><span><b>Type:</b> Not Applicable</span><span><b>Assessment:</b> Not Applicable</span></div></td></tr>
+    <tr><th>ADLs:</th><td><div class="cells"><span><b>Diet:</b> Low sodium, regular</span><span><b>Activity:</b> Frequent ambulation</span></div></td></tr>
+    <tr><th>Restrictions:</th><td><div class="cells"><span><b>Isolation:</b> Standard precautions</span><span><b>Fall Risk:</b> High</span></div></td></tr>
+    <tr><th>Assessments:</th><td class="fields">
+      <span class="stack"><b>Neurologic:</b> Intermittent confusion</span>
+      <span class="stack"><b>Cardiac:</b> Regular rate and rhythm; mild tachycardia</span>
+      <span class="stack"><b>Respiratory:</b> Lungs coarse. Productive cough with thick, yellow sputum. Oxygen saturation levels drop with exertion or when the supplemental oxygen is removed.</span>
+      <span class="stack"><b>GI/GU:</b> No issues</span>
+      <span class="stack"><b>Integumentary:</b> Intact</span>
+      <span class="stack"><b>Ortho/Mobility:</b> Mild dyspnea present upon exertion. Patient has slight weakness; independent with assist of one.</span>
+      <span class="stack"><b>Psychosocial:</b> Patient appears frustrated with current condition.</span>
+      <span class="stack"><b>Other:</b> Patient reports recent weight loss. A dietary consult was completed yesterday.</span>
+    </td></tr>
+    <tr><th>Labs and Diagnostics:</th><td>Arterial blood gases were completed this morning and reflect worsening respiratory status. A chest x-ray done yesterday was indicative of pneumonia.</td></tr>
+  </tbody></table></div>
+
+  <h4>Assessment</h4>
+  <p><b>Nurse’s Assessment:</b> Patient is experiencing some respiratory distress. He appears stable but exhausted from increased respiratory efforts.</p>
+
+  <h4>Recommendation</h4>
+  <div class="fields">
+    <p><b>Plan of Care:</b> Continue IV antibiotics and pulmonary rehabilitation. Monitor respiratory status closely.</p>
+    <p><b>Tests/Results Pending:</b> None</p>
+    <p><b>Orders pending completion:</b> None</p>
+    <p><b>Other:</b> The last few hours have been difficult, but the increased oxygen has helped. He is slightly anxious and confused. I promised him that we would check on him frequently.</p>
+  </div>
+</section>
+
+<!-- NOTES -->
+<section role="tabpanel" id="notes" aria-labelledby="tab-notes">
+  <h2>Notes</h2>
+
+  <div class="sub" id="nursing">
+    <h3>Notes - Hospital Day 1: Hospital Medicine Nursing Notes</h3>
+    <div class="log">
+      <div class="row"><span class="who">0600: S. Post, RN</span><p>Labs drawn. Patient resting quietly. Oxygen saturation remains between 88% and 89%.</p></div>
+      <div class="row"><span class="who">0400: S. Post, RN</span><p>Patient's oxygen saturation dropped to 86% on 3 L/min via nasal cannula at rest. Patient appears restless and disoriented. Supplemental oxygen increased to 4 L/min via nasal cannula; oxygen saturation increased to and remained above 88%. Coarse lung sounds throughout; cough productive of yellow sputum. Intermittent use of accessory muscles noted with any exertion. Patient encouraged to rest and conserve energy.</p></div>
+      <div class="row"><span class="who">0100: S. Post, RN</span><p>Oxygen saturation level dropped to 87% on 2 L/min via nasal cannula at midnight. Oxygen increased to 3 L/min after coughing and deep breathing failed to improve oxygenation. Patient currently maintaining an oxygen saturation level of 89% on 3 L/min via nasal cannula. Patient resting comfortably with no signs of distress.</p></div>
+    </div>
+  </div>
+
+  <div class="sub" id="nursing-hd0">
+    <h3>Notes - Hospital Day 0: Hospital Medicine Nursing Notes</h3>
+    <div class="log">
+      <div class="row"><span class="who">2355: S. Post, RN</span><p>Patient's temperature increased to 101.5 F (38.6 C). Acetaminophen administered per physician's order.</p></div>
+      <div class="row"><span class="who">2315: O. Tighe, RN</span><p>Report given to oncoming nurse.</p></div>
+      <div class="row"><span class="who">1700: O. Tighe, RN</span><p>Patient's oxygen saturation dropped to 84%; patient is disoriented. Nasal cannula found to be off patient and reapplied. Oxygen saturation improved to 88% with reapplication of nasal cannula. Patient's temperature increased to 102.5 F (39.2 C); acetaminophen administered per physician's orders.</p></div>
+      <div class="row"><span class="who">1630: O. Tighe, RN</span><p>Patient returned to floor from pulmonary function lab.</p></div>
+      <div class="row"><span class="who">1500: R. Molitor, RN</span><p>Report given to oncoming nurse.</p></div>
+      <div class="row"><span class="who">1430: R. Molitor, RN</span><p>Patient transported to pulmonary function test accompanied by transport team member. Portable oxygen unit set-up for patient at 2 L/min via nasal cannula; oxygen unit transported with patient.</p></div>
+      <div class="row"><span class="who">1345: R. Molitor, RN</span><p>Physical/occupational therapists working with patient.</p></div>
+      <div class="row"><span class="who">0800: R. Molitor, RN</span><p>Patient arrived from emergency department on a stretcher. Nursing assessment completed. IV patent and infusing per new fluid order with no redness, swelling, or warmth at infusion site. Patient oriented to unit routines and safety equipment in room. Plan of care discussed. Patient verbalizes understanding. Patient resting with oxygen via nasal cannula in place.</p></div>
+    </div>
+  </div>
+
+  <div class="sub" id="progress">
+    <h3>Notes - Hospital Day 0: Hospital Medicine Progress Notes</h3>
+    <div class="log">
+      <div class="row"><span class="who">1800: L. Myer, MD</span><p>Oxygen saturation level 88% on 2 L/min supplemental oxygen. Patient remains febrile. Pulmonary function test suggests progressive worsening of COPD; functional decline potential related to complication of pneumonia. Sputum culture indicates Gram positive cocci. Plan to monitor, provide supplemental oxygen, and continue IV antibiotics.</p></div>
+      <div class="row"><span class="who">0830: L. Myer, MD</span><p>69-year-old Caucasian male with pneumonia and history of COPD admitted from emergency department to medical surgical unit for IV antibiotics, oxygenation, and monitoring. Oxygen saturation levels currently adequate on 2 L/min via nasal cannula in light of COPD. Pulmonary function test ordered. Levofloxacin IV begun for treatment of pneumonia. Recent weight loss reported; consult ordered with dietician. Physical and occupational therapy consults ordered.</p></div>
+    </div>
+  </div>
+
+  <div class="sub" id="hp">
+    <h3>Notes - Hospital Day 0, 0100: Hospital Medicine History and Physical</h3>
+
+    <h4>Patient Information</h4>
+    <div class="fields">
+      <p><b>Chief Informant:</b> Wallace Peterson</p>
+      <p><b>Chief Complaint:</b> "Trouble breathing"</p>
+      <p><b>History of Present Illness:</b> Fever, productive cough with yellow sputum, and shortness of breath for the past 2 days. Patient reports a recent history of recurrent pneumonia and bronchitis.</p>
+      <p><b>Allergies:</b> None known</p>
+      <p><b>Family History:</b> Mother died of lung cancer at age 72; history of schizophrenia. Father died of stroke at age 67; history of prostate and testicular cancer.</p>
+    </div>
+
+    <h4>Past Medical History</h4>
+    <div class="fields">
+      <p><b>Previous Illnesses:</b> COPD for 6 years, multiple hospitalizations for pneumonia and bronchitis in the past few years</p>
+      <p><b>Contagious Diseases:</b> None</p>
+      <p><b>Injuries or Trauma:</b> No significant history</p>
+      <p><b>Surgical History:</b> Appendectomy at age 40; no complications</p>
+      <p><b>Dietary History:</b> Poor, per patient report</p>
+      <p><b>Other:</b> Smoker, 70-pack-year history. Quit 5 years ago.</p>
+      <p><b>Social History:</b> Divorced 5 years ago. Currently in monogamous relationship with male partner. Reports good friend support. Minimal contact with family.</p>
+      <p><b>Current Medications:</b><br>Hydrochlorothiazide 12.5 mg/day by mouth<br>Metoprolol 50 mg/day by mouth</p>
+    </div>
+
+    <h4>Review of Systems</h4>
+    <div class="fields">
+      <p><b>Integument:</b> No skin issues, per patient</p>
+      <p><b>HEENT:</b> No issues with head, eyes, ears, nose, or throat, per patient</p>
+      <p><b>Cardiovascular:</b> No palpitations or irregular heart beats. No swelling in legs or feet.</p>
+      <p><b>Respiratory:</b> COPD for 6 years. Quit smoking 5 years ago. Several bouts of pneumonia and bronchitis over the past few years. Reports chronic cough. Cough currently productive with moderate amount of yellow sputum.</p>
+      <p><b>Gastrointestinal:</b> Appetite poor recently. Notable weight loss of "5-10 pounds over the past few months." No history heartburn or reflux. No history of abdominal or rectal issues.</p>
+      <p><b>Genitourinary:</b> No frequency, burning, or discomfort with urination. No history of urinary issues.</p>
+      <p><b>Musculoskeletal:</b> No joint pain or swelling. No muscle pain or issues with movement or range of motion. No history of joint or bone issues.</p>
+      <p><b>Neurologic:</b> No changes in sensation or movement. No history of neurologic disease. Reports slight difficulty thinking and remembering things.</p>
+      <p><b>Developmental:</b> No issues.</p>
+      <p><b>Endocrine:</b> No hot or cold intolerance.</p>
+      <p><b>Genitalia:</b> No issues.</p>
+      <p><b>Lymphatic:</b> No enlarged lymph nodes. No tenderness.</p>
+    </div>
+
+    <h4>Physical Exam</h4>
+    <div class="fields">
+      <p><b>General:</b> Patient is a thin, pleasant older gentleman who appears his stated age of 69. Appears in moderate respiratory distress with any exertion.</p>
+      <p><b>Vital Signs:</b> Slight hypertension. Increased temperature.</p>
+      <p><b>Integument:</b> Skin cool, pale and dry. Skin intact with no skin lesions or masses.</p>
+      <p><b>HEENT:</b> Pupils equal, round, reactive to light and accommodation. Nostrils patent. Gums pink and firm. Neck supple. Thyroid not palpable. No jugular vein distention.</p>
+      <p><b>Cardiovascular:</b> No thrills or heaves. PMI 5th intercostal space, midclavicular line. Rhythm regular. No murmurs or adventitious sounds audible. Capillary refill 3 seconds in all extremities.</p>
+      <p><b>Respiratory:</b> Breathing shallow. Recruiting accessory muscles for breathing. Chest excursion symmetrical. Lungs coarse bilaterally.</p>
+      <p><b>Gastrointestinal:</b> Abdomen concave, soft and non-tender with palpation. Bowel sounds active in all quadrants.</p>
+      <p><b>Genitourinary:</b> Unremarkable</p>
+      <p><b>Musculoskeletal:</b> Active range of motion in all extremities. Slight clubbing noted in fingers. Posture stooped. Patient thin. Neck muscles enlarged.</p>
+      <p><b>Neurologic:</b> Alert and oriented. Gait stable, though slow moving. Cranial nerves 2 through 12 intact. Deep tendon reflexes intact.</p>
+      <p><b>Developmental:</b></p>
+      <p><b>Endocrine:</b> No evidence of endocrine abnormalities</p>
+      <p><b>Genitalia:</b> Deferred</p>
+      <p><b>Lymphatic:</b> No lymphadenopathy</p>
+    </div>
+
+    <h4>Impressions</h4>
+    <div class="fields">
+      <p>Increased WBC count</p>
+      <p>Consolidation in lower lobes on chest x-ray</p>
+      <p>Probable pneumonia</p>
+      <p>COPD worsening</p>
+      <p>Anorexia</p>
+    </div>
+
+    <h4>Plan</h4>
+    <ol>
+      <li>Admit to inpatient unit.</li>
+      <li>Provide supplemental oxygen.</li>
+      <li>Pulmonary function test.</li>
+      <li>IV antibiotics.</li>
+      <li>Dietary consult.</li>
+    </ol>
+    <p class="sig">Lois Myer, MD</p>
+  </div>
+</section>
+
+<!-- ACTIVE ORDERS -->
+<section role="tabpanel" id="orders" aria-labelledby="tab-orders">
+  <h2>Active Orders</h2>
+
+  <div class="sub">
+    <h3>Active Orders - Hospital Day 1: Provider Orders</h3>
+    <div class="log">
+      <div class="row"><span class="who">0820: L. Myer, MD</span><div><ol>
+        <li>Initiate 100% oxygen via a non-rebreather face mask now.</li>
+        <li>Arterial blood gases now.</li>
+        <li>Portable chest x-ray now.</li>
+        <li>Transfer the patient to the intensive care unit.</li>
+      </ol></div></div>
+      <div class="row"><span class="who">0745: L. Myer, MD</span><div><ol>
+        <li>Chest x-ray tomorrow morning</li>
+      </ol></div></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <h3>Active Orders - Hospital Day 0: Provider Orders</h3>
+    <div class="log">
+      <div class="row"><span class="who">1800: L. Myer, MD</span><div><ol>
+        <li>Continuous pulse oximetry. Notify physician of oxygen saturation consistently below 88% on more than 4 L/min oxygen via nasal cannula.</li>
+      </ol></div></div>
+      <div class="row"><span class="who">0800: L. Myer, MD</span><div><ol>
+        <li>Code status: Full code</li>
+        <li>Admit to medical-surgical unit</li>
+        <li>Titrate oxygen via nasal cannula to keep oxygen saturation at or above 88%.</li>
+        <li>Daily labs: arterial blood gases, complete blood cell count with differential, and basic metabolic panel</li>
+        <li>Diet: Low sodium diet</li>
+        <li>Activity: Frequent ambulation with supplemental oxygen for progressively longer activity time</li>
+        <li>Vital signs every 4 hours</li>
+        <li>Weight daily in AM</li>
+        <li>Intake and output every shift</li>
+        <li>Dietary and physical/occupational therapy consults</li>
+        <li>Dextrose 5% in 1/2 normal saline IV continuous infusion at 75 mL/hr.</li>
+        <li>Pulmonary function evaluation now</li>
+        <li>Pulmonary rehabilitation consult</li>
+        <li>Peak flow measurements daily</li>
+        <li>Hydrochlorothiazide 12.5 mg by mouth daily</li>
+        <li>Metoprolol 50 mg PO daily</li>
+        <li>Ipratropium metered-dose inhaler 2 puffs via inhalation every 6 hours</li>
+        <li>Acetaminophen 650 mg by mouth every 4 hours PRN for temperature greater than 101.3 F (38.5 C)</li>
+        <li>Continue levofloxacin 750 mg IV daily</li>
+      </ol></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MAR -->
+<section role="tabpanel" id="mar" aria-labelledby="tab-mar">
+  <h2>Medication Administration Record (MAR) - All</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Medication Name</th><th>Order Details</th><th>Dosage Time</th><th>Action Taken</th></tr></thead>
+    <tbody>
+      <tr><td>Dextrose 5% in 1/2 Sodium Chloride</td><td><b>Order Type:</b> Routine<br><b>Route:</b> IV<br><b>Dose:</b> 75 mL/hr<br><b>Frequency:</b> Continuous</td><td class="n">HD 0, 0800<br>HD 0, 1345<br>HD 0, 1600<br>HD 1, 0000</td><td>Given - RM<br>Given - RM<br>Given - OT<br>Given - SP</td></tr>
+      <tr><td>Hydrochlorothiazide Tablet</td><td><b>Order Type:</b> Routine<br><b>Route:</b> Oral<br><b>Dose:</b> 12.5 mg<br><b>Frequency:</b> QD</td><td></td><td></td></tr>
+      <tr><td>Metoprolol ER Tablet</td><td><b>Order Type:</b> Routine<br><b>Route:</b> Oral<br><b>Dose:</b> 50 mg<br><b>Frequency:</b> QD</td><td></td><td></td></tr>
+      <tr><td>Ipratropium 17 mcg/actuation Inhalation Aerosol (HFA)</td><td><b>Order Type:</b> Routine<br><b>Route:</b> Inhalation<br><b>Dose:</b> 17 mcg/actuation<br><b>Frequency:</b> 2 puffs Q6H</td><td class="n">HD 0, 1255<br>HD 0, 1855<br>HD 1, 0000<br>HD 1, 0600</td><td>Given - RM<br>Given - OT<br>Given - SP<br>Given - SP</td></tr>
+      <tr><td>Acetaminophen Tablet</td><td><b>Order Type:</b> PRN<br><b>Route:</b> Oral<br><b>Dose:</b> 650 mg<br><b>Frequency:</b> Q4H</td><td class="n">HD 0, 1700<br>HD 0, 2350</td><td>Given - OT<br>Given - SP</td></tr>
+      <tr><td>Levofloxacin Injection</td><td><b>Order Type:</b> Routine<br><b>Route:</b> IV<br><b>Dose:</b> 750 mg<br><b>Frequency:</b> QD</td><td></td><td></td></tr>
+      <tr><td>Hydrochlorothiazide Tablet</td><td><b>Order Type:</b> Custom Time<br><b>Route:</b> Oral<br><b>Dose:</b> 12.5 mg<br><b>Frequency:</b> Once</td><td class="n">HD 0, 0800</td><td>Given - RM</td></tr>
+      <tr><td>Metoprolol ER Tablet</td><td><b>Order Type:</b> Custom Time<br><b>Route:</b> Oral<br><b>Dose:</b> 50 mg<br><b>Frequency:</b> Once</td><td class="n">HD 0, 0800</td><td>Given - RM</td></tr>
+      <tr><td>Ipratropium 17mcg/actuation Inhalation Aerosol (HFA)</td><td><b>Order Type:</b> Custom Time<br><b>Route:</b> Inhalation<br><b>Dose:</b> 17 mcg/actuation, 2 puffs<br><b>Frequency:</b> Once</td><td class="n">HD 0, 0800</td><td>Given - RM</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- LABS -->
+<section role="tabpanel" id="labs" aria-labelledby="tab-labs">
+  <h2>Lab &amp; Diagnostic Results</h2>
+
+  <div class="sub">
+    <h3>Laboratory and Diagnostic Results - Laboratory Results</h3>
+
+    <div class="tbl"><table>
+      <thead><tr><th>CBC with Diff</th><th>HD 1, 0600</th><th>HD 0, 1000</th><th>HD 0, 0500</th><th>Reference Ranges and Units</th></tr></thead>
+      <tbody>
+        <tr><td>WBC</td><td class="n">15.4</td><td class="n">15.9</td><td class="n">16.8</td><td class="ref">3.4 - 9.6 x 10³/mL</td></tr>
+        <tr><td>RBC</td><td class="n">4.8</td><td class="n">4.8</td><td class="n">5.0</td><td class="ref"><b>F:</b> 3.9 - 5.1; <b>M:</b> 4.4 - 5.7 x 10⁶/mL</td></tr>
+        <tr><td>Hemoglobin</td><td class="n">14.8</td><td class="n">14.9</td><td class="n">15.2</td><td class="ref"><b>F:</b> 11.6 - 15.0; <b>M:</b> 13.2 - 16.6 g/dL</td></tr>
+        <tr><td>Hematocrit</td><td class="n">44.0</td><td class="n">44.0</td><td class="n">46.0</td><td class="ref"><b>F:</b> 35.5 - 44.9; <b>M:</b> 38.3 - 48.6%</td></tr>
+        <tr><td>MCV</td><td class="n">88.0</td><td class="n">91.0</td><td class="n">92.0</td><td class="ref">80 - 100 µm³</td></tr>
+        <tr><td>MCH</td><td class="n">28.0</td><td class="n">28.0</td><td class="n">29.0</td><td class="ref">26 - 33 pg</td></tr>
+        <tr><td>MCHC</td><td class="n">34.0</td><td class="n">34.0</td><td class="n">35.0</td><td class="ref">30 - 35 g/dL</td></tr>
+        <tr><td>RDW</td><td class="n">13.0</td><td class="n">13.0</td><td class="n">13.0</td><td class="ref">11.5 - 14.5%</td></tr>
+        <tr><td>Platelets</td><td class="n">252</td><td class="n">251</td><td class="n">267</td><td class="ref">150 - 400 x 10³/mL</td></tr>
+        <tr><td>MPV</td><td class="n">8.0</td><td class="n">8.1</td><td class="n">8.2</td><td class="ref">7.5 - 11.0 µm³</td></tr>
+        <tr><td>Neutrophil Segs</td><td class="n">5.24</td><td class="n">5.88</td><td class="n">6.48</td><td class="ref">1.8 - 7.9 x 10³/µL</td></tr>
+        <tr><td>Neutrophil Bands</td><td class="n">2.78</td><td class="n">4.13</td><td class="n">4.40</td><td class="ref">0 - 5%</td></tr>
+        <tr><td>Lymphocyte, Absolute</td><td class="n">4.16</td><td class="n">3.18</td><td class="n">3.20</td><td class="ref">1.0 - 4.0 x 10³/µL</td></tr>
+        <tr><td>Monocyte, Absolute</td><td class="n">2.93</td><td class="n">2.39</td><td class="n">2.40</td><td class="ref">0.1 - 0.7 x 10³/µL</td></tr>
+        <tr><td>Eosinophil, Absolute</td><td class="n">0.23</td><td class="n">0.24</td><td class="n">0.24</td><td class="ref">0.05 - 0.5 x 10³/µL</td></tr>
+        <tr><td>Basophil, Absolute</td><td class="n">0.08</td><td class="n">0.08</td><td class="n">0.08</td><td class="ref">0.03 - 0.1 x 10³/µL</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tbl"><table>
+      <thead><tr><th>BMP</th><th>HD 1, 0600</th><th>HD 0, 1000</th><th>HD 0, 0500</th><th>Reference Ranges and Units</th></tr></thead>
+      <tbody>
+        <tr><td>Sodium</td><td class="n">142</td><td class="n">141</td><td class="n">142</td><td class="ref">135 - 145 mEq/L</td></tr>
+        <tr><td>Potassium</td><td class="n">3.9</td><td class="n">3.8</td><td class="n">3.9</td><td class="ref">3.5 - 5.0 mEq/L</td></tr>
+        <tr><td>Chloride</td><td class="n">100</td><td class="n">102</td><td class="n">103</td><td class="ref">95 - 105 mmol/L</td></tr>
+        <tr><td>CO2</td><td class="n">33</td><td class="n">32</td><td class="n">31</td><td class="ref">23 - 30 mmol/L</td></tr>
+        <tr><td>Glucose</td><td class="n">89</td><td class="n">97</td><td class="n">76</td><td class="ref">65 - 110 mg/dL</td></tr>
+        <tr><td>BUN</td><td class="n">23</td><td class="n">24</td><td class="n">25</td><td class="ref">8 - 21 mg/dL</td></tr>
+        <tr><td>Creatinine</td><td class="n">0.8</td><td class="n">0.9</td><td class="n">0.9</td><td class="ref">0.8 - 1.3 mg/dL</td></tr>
+        <tr><td>Calcium</td><td class="n">9.2</td><td class="n">9.1</td><td class="n">9.2</td><td class="ref">8.5 - 10.2 mg/dL</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tbl"><table>
+      <thead><tr><th>LFTs</th><th>HD 0, 0500</th><th>Reference Ranges and Units</th></tr></thead>
+      <tbody>
+        <tr><td>ALT</td><td class="n">15</td><td class="ref">0 - 47 U/L</td></tr>
+        <tr><td>AST</td><td class="n">18</td><td class="ref">10 - 40 U/L</td></tr>
+        <tr><td>ALKP</td><td class="n">124</td><td class="ref">37 - 117 U/L</td></tr>
+        <tr><td>GGT</td><td class="n"></td><td class="ref">9 - 48 U/L</td></tr>
+        <tr><td>Total Bilirubin</td><td class="n">0.6</td><td class="ref">0.2 - 1.2 mg/dL</td></tr>
+        <tr><td>Direct Bilirubin</td><td class="n"></td><td class="ref">0.0 - 0.3 mg/dL</td></tr>
+        <tr><td>Albumin</td><td class="n">3.7</td><td class="ref">3.7 - 5.7 g/dL</td></tr>
+        <tr><td>Protein</td><td class="n">6.6</td><td class="ref">6 - 10 g/dL</td></tr>
+        <tr><td>Amylase</td><td class="n"></td><td class="ref">0 - 97 U/L</td></tr>
+        <tr><td>Lipase</td><td class="n"></td><td class="ref">&lt;=90 U/L</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tbl"><table>
+      <thead><tr><th>ABG</th><th>HD 1, 0600</th><th>HD 0, 1000</th><th>HD 0, 0500</th><th>Reference Ranges and Units</th></tr></thead>
+      <tbody>
+        <tr><td>pH</td><td class="n">7.32</td><td class="n">7.32</td><td class="n">7.31</td><td class="ref">7.35 - 7.45</td></tr>
+        <tr><td>PaCO2</td><td class="n">52</td><td class="n">50</td><td class="n">51</td><td class="ref">35 - 45 mmHg</td></tr>
+        <tr><td>PaO2</td><td class="n">60</td><td class="n">63</td><td class="n">64</td><td class="ref">80 - 95 mmHg</td></tr>
+        <tr><td>HCO3</td><td class="n">16</td><td class="n">27</td><td class="n">29</td><td class="ref">23.0 - 28.0 mmol/L</td></tr>
+        <tr><td>SaO2</td><td class="n">92</td><td class="n">92</td><td class="n">89</td><td class="ref">95 - 99%</td></tr>
+        <tr><td>Lactate</td><td class="n"></td><td class="n"></td><td class="n"></td><td class="ref">0.7 - 1.9 mmol/L</td></tr>
+        <tr><td>iCa</td><td class="n"></td><td class="n"></td><td class="n"></td><td class="ref">mmol/L</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tbl"><table>
+      <thead><tr><th>Microbiology/ Serology</th><th>HD 1, 0600</th><th>HD 0, 1230</th><th>Reference Ranges and Units</th></tr></thead>
+      <tbody>
+        <tr><td class="group" colspan="4">Culture: Sputum</td></tr>
+        <tr><td class="indent">Pneumococcus pneumoniae</td><td>Positive</td><td></td><td>Negative</td></tr>
+        <tr><td class="indent">Gram Stain Cocci</td><td></td><td>Positive</td><td>Negative</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="sub" id="imaging">
+    <h3>Laboratory and Diagnostic Results - Diagnostic Results</h3>
+    <div class="tbl"><table><tbody>
+      <tr><th>Exam Day, Time:</th><td>HD 0, 0510</td></tr>
+      <tr><th>Test Type:</th><td>X-ray</td></tr>
+      <tr><th>Order Name:</th><td>Posteroanterior (PA) chest x-ray</td></tr>
+      <tr><th>Report:</th><td>X-ray imaging shows increased consolidation in the lower lobes. Right middle lobe shows lobar consolidation. Heart slightly enlarged. Pulmonary vessels enlarged. Hyperinflation evident throughout lobes bilaterally. Diaphragm flattened.</td></tr>
+      <tr><th>Impression:</th><td><ol><li>Hyperinflation and diaphragm flattening consistent with chronic obstructive pulmonary disease</li><li>Consolidation suggestive of pneumonia</li></ol></td></tr>
+      <tr><th>Recommendation:</th><td>Present results for review by requesting provider</td></tr>
+      <tr><th>Signature:</th><td></td></tr>
+    </tbody></table></div>
+
+    <div class="tbl"><table><tbody>
+      <tr><th>Exam Day, Time:</th><td>HD 0, 1500</td></tr>
+      <tr><th>Test Type:</th><td>Other Studies</td></tr>
+      <tr><th>Order Name:</th><td>Pulmonary Function: Full</td></tr>
+      <tr><th>Report:</th><td>Decreased forced expiratory volume. FEV=28%.<br>Decreased Tiffeneau index. Forced expiratory volume/forced vital capacity ratio low. FEV1/FVC=36%.</td></tr>
+      <tr><th>Impression:</th><td>Worsening chronic obstructive lung disease.</td></tr>
+      <tr><th>Recommendation:</th><td>Submit results to patient’s providers for consideration.</td></tr>
+      <tr><th>Signature:</th><td>M Askeland, RT</td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<!-- OTHER -->
+<section role="tabpanel" id="other" aria-labelledby="tab-other">
+  <h2>Other</h2>
+
+  <div class="sub" id="ed">
+    <h3>Other - Hospital Day 0: ED Physician’s Notes</h3>
+    <div class="log">
+      <div class="row"><span class="who">0800: Inez Marcos, MD</span><p>Care transferred. Lois Myer, MD, notified.</p></div>
+      <div class="row"><span class="who">0530: Inez Marcos, MD</span><div><p>Chest x-ray results suggest pneumonia. Patient informed of results. Plan to admit patient to medical-surgical unit for IV antibiotic therapy. Patient in agreement with treatment plan. Lois Myer, MD, consulted and accepted admission. Full report provided. Waiting for bed on med-surg unit; Dr. Myer aware of delay.</p><p>Order: Levofloxacin 750 mg IV every 24 hours, first dose now.</p></div></div>
+      <div class="row"><span class="who">0400: Inez Marcos, MD</span><p>Orders: Lab work: complete metabolic panel, arterial blood gases, and CBC with differential. Send sputum for Gram stain, culture and sensitivity.</p></div>
+      <div class="row"><span class="who">0300: Inez Marcos, MD</span><p>Orders: IV normal saline at 50 mL/hr. Chest x-ray now.</p></div>
+      <div class="row"><span class="who">0130: Inez Marcos, MD</span><div><p>69-year-old Caucasian male with 6 year history of COPD presented to emergency department with dyspnea, productive cough, and fever.</p><p>Lungs coarse throughout. Breathing slightly labored; using some accessory muscles. Plan to monitor and provide oxygen.</p><p>Order: Titrate oxygen for comfort and to maintain oxygen saturation level above 88%.</p></div></div>
+    </div>
+  </div>
+
+  <div class="sub" id="ed-nurse">
+    <h3>Other - Hospital Day 0: ED Nurse’s Notes</h3>
+    <div class="log">
+      <div class="row"><span class="who">0800: A. Lake, RN</span><p>Report called to Roland Monitor, RN on medical-surgical unit at 0730. Bed available on medical-surgical unit. Patient transported to unit accompanied by transport staff.</p></div>
+      <div class="row"><span class="who">0600: A. Lake, RN</span><p>Levofloxacin IV administered at rate of 150 mL/hr over 1 hour. IV site without redness or swelling. Tolerating infusion well. Patient stable and sleeping intermittently.</p></div>
+      <div class="row"><span class="who">0400: A. Lake, RN</span><p>Blood work and sputum samples collected and sent to lab. Patient tolerated procedures well.</p></div>
+      <div class="row"><span class="who">0300: A. Lake, RN</span><p>Oxygen via nasal cannula titrated to 2 L/min for patient's comfort at 0130. 20-gauge angiocatheter started in right forearm on first attempt. Normal saline IV infusion started at 50 mL/hr.</p></div>
+      <div class="row"><span class="who">0100: A. Lake, RN</span><p>69-year-old male presented to emergency department with complaints of shortness of breath, fever and cough. History of COPD. Patient triaged and settled in bay. Physician notified.</p></div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.tabs [role="tab"]'));
+  var panels=tabs.map(function(t){return document.getElementById(t.getAttribute('aria-controls'));});
+  panels.forEach(function(p,i){
+    var pg=document.createElement('div');pg.className='pager';
+    var prev=document.createElement('button');prev.type='button';
+    var next=document.createElement('button');next.type='button';
+    if(i>0){prev.textContent='← '+tabs[i-1].textContent;prev.onclick=function(){show(i,-1);};}else prev.style.visibility='hidden';
+    if(i<tabs.length-1){next.textContent=tabs[i+1].textContent+' →';next.onclick=function(){show(i,1);};}else next.style.visibility='hidden';
+    pg.appendChild(prev);pg.appendChild(next);p.appendChild(pg);
+  });
+  function show(i,step){
+    if(step){i+=step;}
+    tabs.forEach(function(t,j){var on=j===i;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;panels[j].classList.toggle('active',on);});
+    try{tabs[i].scrollIntoView({block:'nearest',inline:'nearest'});}catch(e){}
+    try{history.replaceState(null,'','#'+panels[i].id);}catch(e){}
+    if(step!==undefined){var y=document.getElementById('top').getBoundingClientRect().bottom+window.scrollY;if(window.scrollY>y)window.scrollTo(0,y);}
+  }
+  function fromHash(){
+    var id=(location.hash||'').slice(1); if(!id) return false;
+    var el=document.getElementById(id); if(!el) return false;
+    var panel=el.closest('[role="tabpanel"]'); if(!panel) return false;
+    var i=panels.indexOf(panel);
+    tabs.forEach(function(t,j){var on=j===i;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;panels[j].classList.toggle('active',on);});
+    if(el!==panel){setTimeout(function(){el.scrollIntoView({block:'start'});},0);}
+    return true;
+  }
+  tabs.forEach(function(t,i){
+    t.addEventListener('click',function(){show(i,0);});
+    t.addEventListener('keydown',function(e){
+      var k=e.key,n=null;
+      if(k==='ArrowRight')n=(i+1)%tabs.length;else if(k==='ArrowLeft')n=(i-1+tabs.length)%tabs.length;
+      else if(k==='Home')n=0;else if(k==='End')n=tabs.length-1;
+      if(n!==null){e.preventDefault();show(n);tabs[n].focus();}
+    });
+  });
+  if(!fromHash()) show(0);
+  window.addEventListener('hashchange',fromHash);
+})();
+</script>
+</body>
+</html>
